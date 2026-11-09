@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Library</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Orbitron:wght@700&display=swap">
+<style>
+body{margin:0;background:#000;color:#fff;font:500 16px Montserrat,system-ui,sans-serif;padding:20px;display:grid;justify-items:center}
+main{width:min(100%,560px)}
+h1{font:700 24px Orbitron,sans-serif;margin:8px 4px 18px}
+a.item{display:flex;align-items:center;gap:14px;background:#0e0e0e;border:1.5px solid #1d2440;border-radius:22px;padding:16px 18px;margin-bottom:12px;color:#fff;text-decoration:none}
+a.item:active,a.item:focus-visible{border-color:#4c8dff;outline:none}
+.pl{flex:none;width:44px;height:44px;border-radius:50%;border:2px solid #444;display:grid;place-items:center}
+.pl svg{width:18px;margin-left:3px;fill:#fff}
+.t{overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.d{color:#9aa0b4;font-size:13px;font-weight:400;margin-top:2px}
+.empty{color:#9aa0b4;line-height:1.6;padding:8px 4px}
+</style></head><body><main>
+<h1>Library</h1><div id="list"></div></main>
+<script>
+fetch('/api/library').then(r=>r.json()).then(items=>{
+ const box=document.getElementById('list');
+ if(!items.length){box.innerHTML='<p class="empty">No videos yet. Upload or forward a video to your channel and it will appear here.</p>';return}
+ items.forEach(it=>{
+  const a=document.createElement('a');a.className='item';a.href='/?v='+encodeURIComponent(it.id);
+  a.innerHTML='<span class="pl"><svg viewBox="0 0 24 24"><path d="M6 3.5v17l14-8.5z"/></svg></span><span><div class="t"></div><div class="d"></div></span>';
+  a.querySelector('.t').textContent=it.title;
+  a.querySelector('.d').textContent=it.added?new Date(it.added).toLocaleString():'';
+  box.appendChild(a);
+ });
+});
+</script></body></html>
