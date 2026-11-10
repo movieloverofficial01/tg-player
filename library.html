@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07080d">
+<title>Library</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Orbitron:wght@700&display=swap">
+<style>
+:root{--bg:#07080d;--glass:rgba(255,255,255,.045);--line:rgba(255,255,255,.1);--txt:#f2f4fa;--mute:#8d94ab;--a1:#4c8dff;--a2:#8a6bff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg)}
+body{margin:0;min-height:100vh;color:var(--txt);font:500 15px Montserrat,system-ui,sans-serif;padding:max(18px,env(safe-area-inset-top)) 16px 40px;background:radial-gradient(900px 520px at 12% -12%,#1b2a6b66,transparent 60%),radial-gradient(700px 440px at 100% 0,#5b2fa855,transparent 60%),var(--bg);background-attachment:fixed}
+main{width:min(100%,980px);margin:0 auto}
+h1{font:700 clamp(22px,6vw,32px) Orbitron,sans-serif;margin:6px 2px 4px}
+.sub{color:var(--mute);font-size:13px;margin:0 2px 16px}
+.search{width:100%;font:inherit;font-size:14px;color:var(--txt);background:var(--glass);border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin-bottom:18px;outline:none}
+.search:focus{border-color:var(--a1)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:14px}
+a.item{display:block;color:inherit;text-decoration:none;border-radius:20px;background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02));border:1px solid var(--line);padding:7px;transition:transform .15s,border-color .15s}
+a.item:active{transform:scale(.98)}
+a.item:hover,a.item:focus-visible{border-color:var(--a1);outline:none}
+.poster{position:relative;aspect-ratio:16/10;border-radius:14px;display:grid;place-items:center;overflow:hidden}
+.pl{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.18);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.3);display:grid;place-items:center}
+.pl svg{width:18px;margin-left:3px;fill:#fff}
+.q{position:absolute;left:8px;bottom:8px;display:flex;gap:4px;flex-wrap:wrap}
+.q span{font-size:10px;font-weight:700;background:rgba(0,0,0,.55);padding:3px 7px;border-radius:999px}
+.meta{padding:10px 6px 6px}
+.t{font-size:13.5px;font-weight:600;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.d{color:var(--mute);font-size:11.5px;font-weight:400;margin-top:4px}
+.empty{color:var(--mute);line-height:1.7;padding:24px 4px;text-align:center}
+</style></head><body><main>
+<h1>Library</h1><p class="sub" id="count">&nbsp;</p>
+<input class="search" id="q" type="search" placeholder="Search videos" autocomplete="off">
+<div class="grid" id="list"></div>
+<p class="empty" id="empty" hidden>No videos yet. Add one in videos.json, or post a video to your channel while the server is running.</p>
+</main>
+<script>
+let items=[];
+const box=document.getElementById('list');
+const hue=s=>{let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))%360;return h};
+function render(f){
+ box.innerHTML='';
+ const list=items.filter(i=>i.title.toLowerCase().includes(f));
+ document.getElementById('empty').hidden=items.length>0;
+ list.forEach(it=>{
+  const a=document.createElement('a');a.className='item';a.href='/?v='+encodeURIComponent(it.id);
+  const h=hue(it.id);
+  a.innerHTML='<div class="poster"><span class="pl"><svg viewBox="0 0 24 24"><path d="M6 3.5v17l14-8.5z"/></svg></span><div class="q"></div></div><div class="meta"><div class="t"></div><div class="d"></div></div>';
+  a.querySelector('.poster').style.background='linear-gradient(135deg,hsl('+h+',60%,32%),hsl('+((h+60)%360)+',65%,18%))';
+  (it.q||[]).forEach(q=>{const s=document.createElement('span');s.textContent=q+'p';a.querySelector('.q').appendChild(s)});
+  a.querySelector('.t').textContent=it.title;
+  a.querySelector('.d').textContent=it.added?new Date(it.added).toLocaleDateString():'';
+  box.appendChild(a);
+ });
+}
+fetch('/api/library').then(r=>r.json()).then(d=>{items=d;
+ document.getElementById('count').textContent=d.length+(d.length===1?' video':' videos');render('')});
+document.getElementById('q').addEventListener('input',e=>render(e.target.value.trim().toLowerCase()));
+</script></body></html>
