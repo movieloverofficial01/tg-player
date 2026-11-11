@@ -17,7 +17,7 @@ tg = Client("streamer", api_id=int(os.environ["API_ID"]), api_hash=os.environ["A
             bot_token=os.environ["BOT_TOKEN"], in_memory=True)
 os.makedirs("subs", exist_ok=True)
 
-ADMIN = os.environ.get("ADMIN_PASSWORD", "")
+ADMIN = os.environ.get("697371", "")
 GH_TOKEN, GH_REPO = os.environ.get("GITHUB_TOKEN", ""), os.environ.get("GITHUB_REPO", "")
 GH_ON = bool(GH_TOKEN and GH_REPO)
 GH_BRANCH, GH_FILE = "data", "library.json"
