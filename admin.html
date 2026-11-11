@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex"><meta name="theme-color" content="#07080d">
+<title>Admin</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Orbitron:wght@700&display=swap">
+<style>
+:root{--bg:#07080d;--glass:rgba(255,255,255,.045);--line:rgba(255,255,255,.1);--txt:#f2f4fa;--mute:#8d94ab;--a1:#4c8dff;--a2:#8a6bff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg)}
+body{margin:0;min-height:100vh;color:var(--txt);font:500 15px Montserrat,system-ui,sans-serif;padding:max(18px,env(safe-area-inset-top)) 16px 40px;background:radial-gradient(900px 520px at 12% -12%,#1b2a6b66,transparent 60%),radial-gradient(700px 440px at 100% 0,#5b2fa855,transparent 60%),var(--bg);background-attachment:fixed}
+main{width:min(100%,720px);margin:0 auto}
+h1{font:700 clamp(20px,5.5vw,28px) Orbitron,sans-serif;margin:6px 2px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+h1 a{font:600 13px Montserrat,sans-serif;color:var(--txt);text-decoration:none;padding:8px 14px;border-radius:999px;background:var(--glass);border:1px solid var(--line)}
+.card{padding:16px;border-radius:22px;background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.025));border:1px solid var(--line);margin-bottom:14px}
+h2{font-size:14px;margin:0 0 12px;color:var(--mute);letter-spacing:.06em;text-transform:uppercase}
+input,textarea,select{width:100%;font:inherit;font-size:14px;color:var(--txt);background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:12px;padding:12px 14px;outline:none}
+textarea{min-height:110px;resize:vertical}
+input:focus,textarea:focus,select:focus{border-color:var(--a1)}
+option{background:#10121c}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.btn{font:inherit;font-size:14px;font-weight:700;color:#fff;border:0;border-radius:12px;padding:13px 18px;cursor:pointer;background:linear-gradient(135deg,var(--a1),var(--a2));width:100%}
+.btn:disabled{opacity:.5}
+.btn.s{width:auto;padding:8px 12px;font-size:12px;background:rgba(255,255,255,.08);border:1px solid var(--line)}
+.btn.s.d{color:#ff9a9a}
+.note{font-size:12.5px;padding:10px 14px;border-radius:12px;margin-bottom:14px}
+.note.ok{background:rgba(60,200,120,.12);color:#8ee6b0}.note.warn{background:rgba(255,170,60,.12);color:#ffcf8a}
+.res{font-size:12.5px;padding:8px 2px;word-break:break-all;color:var(--mute)}.res.ok{color:#8ee6b0}.res.bad{color:#ff9a9a}
+.vi{display:flex;align-items:center;gap:10px;padding:12px 0;border-top:1px solid var(--line)}
+.vi:first-of-type{border-top:0}
+.vt{flex:1;min-width:0}.vt a{color:var(--txt);text-decoration:none;font-weight:600;font-size:14px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vt span{font-size:11.5px;color:var(--mute)}
+.help{font-size:12.5px;color:var(--mute);line-height:1.6;margin:10px 2px 0}
+.err{color:#ff9a9a;font-size:13px;min-height:18px;margin:8px 2px 0}
+</style></head><body><main>
+<div id="login"><h1>Admin</h1><div class="card"><h2>Password</h2>
+ <input id="pw" type="password" placeholder="Admin password" autocomplete="current-password">
+ <div class="err" id="lerr"></div><button class="btn" id="go" style="margin-top:8px">Unlock</button></div></div>
+<div id="main" hidden>
+ <h1>Admin <a href="/">View site &rarr;</a></h1>
+ <div class="note" id="persist"></div>
+ <div class="card"><h2>Add videos</h2>
+  <textarea id="links" placeholder="Paste Telegram message links, one per line&#10;https://t.me/c/1234567890/56"></textarea>
+  <div class="two">
+   <select id="qual"><option value="auto">Quality: auto</option><option value="480">480p</option><option value="720">720p</option><option value="1080">1080p</option></select>
+   <select id="tgt"><option value="">Add as: new video</option></select>
+  </div>
+  <button class="btn" id="add">Add</button><div id="out"></div>
+  <p class="help">In Telegram, long-press the video in your channel and choose Copy Link. The bot must be an admin of that channel.</p>
+ </div>
+ <div class="card"><h2 id="cnt">Videos</h2><div id="list"></div></div>
+</div>
+<script>
+const $=id=>document.getElementById(id);let pw=localStorage.getItem('adm')||'',items=[];
+async function api(path,body){const r=await fetch('/api/admin/'+path,{method:body?'POST':'GET',headers:{'x-admin':pw,'content-type':'application/json'},body:body?JSON.stringify(body):undefined});
+ if(r.status===401){lock('Wrong password');throw new Error('Wrong password')}
+ if(!r.ok)throw new Error(await r.text());return r.json()}
+function lock(m){localStorage.removeItem('adm');$('login').hidden=false;$('main').hidden=true;$('lerr').textContent=m||''}
+async function load(){const d=await api('list');items=d.items;$('login').hidden=true;$('main').hidden=false;
+ const p=$('persist');p.className='note '+(d.persist==='github'?'ok':'warn');
+ p.textContent=d.persist==='github'?'Saved permanently to GitHub.':'Not permanent yet: add GITHUB_TOKEN and GITHUB_REPO in Render, otherwise added videos disappear when the server restarts.';
+ const t=$('tgt');t.innerHTML='<option value="">Add as: new video</option>';
+ items.filter(i=>!i.manual).forEach(i=>{const o=document.createElement('option');o.value=i.id;o.textContent='Quality of: '+i.title;t.appendChild(o)});
+ $('cnt').textContent=items.length+(items.length===1?' video':' videos');
+ const box=$('list');box.innerHTML='';
+ items.forEach(i=>{const row=document.createElement('div');row.className='vi';
+  row.innerHTML='<div class="vt"><a></a><span></span></div>';
+  const a=row.querySelector('a');a.textContent=i.title;a.href='/?v='+encodeURIComponent(i.id);
+  row.querySelector('span').textContent=i.q.map(q=>q+'p').join(' · ')+(i.manual?' · videos.json':'');
+  if(!i.manual){
+   const rn=document.createElement('button');rn.className='btn s';rn.textContent='Rename';
+   rn.onclick=async()=>{const n=prompt('New title',i.title);if(n&&n.trim()){await api('rename',{id:i.id,title:n.trim()});load()}};
+   const dl=document.createElement('button');dl.className='btn s d';dl.textContent='Delete';
+   dl.onclick=async()=>{if(confirm('Delete "'+i.title+'"?')){await api('delete',{id:i.id});load()}};
+   row.append(rn,dl)}
+  box.appendChild(row)})}
+$('go').onclick=async()=>{pw=$('pw').value;localStorage.setItem('adm',pw);try{await load()}catch(e){$('lerr').textContent=e.message}};
+$('pw').addEventListener('keydown',e=>{if(e.key==='Enter')$('go').click()});
+$('add').onclick=async()=>{const lines=$('links').value.split('\n').map(x=>x.trim()).filter(Boolean);if(!lines.length)return;
+ const b=$('add'),out=$('out');b.disabled=true;out.innerHTML='';
+ for(const link of lines){const r0=document.createElement('div');r0.className='res';r0.textContent='... '+link;out.appendChild(r0);
+  try{const r=await api('add',{link,quality:$('qual').value,target:$('tgt').value});
+   r0.className='res '+(r.ok?'ok':'bad');
+   r0.textContent=r.ok?'Added: '+r.title+' ('+r.q+'p)'+(r.merged?' - joined an existing video':'')+(r.warn?' - '+r.warn:''):r.error+' - '+link}
+  catch(e){r0.className='res bad';r0.textContent=e.message}}
+ b.disabled=false;$('links').value='';try{await load()}catch(e){}};
+if(pw)load().catch(e=>{$('lerr').textContent=e.message});
+</script></body></html>

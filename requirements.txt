@@ -1,0 +1,5 @@
+starlette
+uvicorn
+kurigram
+tgcrypto
+httpx
